@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "src/socialverse_backend"
+]
+resolver = "2"
