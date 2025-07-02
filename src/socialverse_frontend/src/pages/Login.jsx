@@ -43,17 +43,21 @@ const Login = () => {
     <div className="min-h-screen flex flex-col justify-between bg-gray-100">
       {/* Header */}
       <header className="w-full py-4 px-8 bg-white rounded-b-2xl shadow-sm flex items-center">
-        <img src="/logo2.svg" alt="SocialVerse Logo" className="h-7 w-7 mr-2" />
-        <span className="font-bold text-lg text-gray-800">SocialVerse</span>
+        <span className="inline-flex items-center">
+          <svg className="h-5 w-5 text-blue-600 mr-1" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="12" height="12" rx="3" />
+          </svg>
+          <span className="font-bold text-lg text-blue-600">SocialVerse</span>
+        </span>
       </header>
 
       {/* Main Card */}
       <main className="flex-1 flex items-center justify-center">
         <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md flex flex-col items-center">
           <div className="w-full flex justify-center mb-6">
-            <div className="bg-blue-600 rounded-lg flex items-center justify-center w-48 h-32">
+            <div className="bg-blue-600 rounded-lg flex items-center justify-center w-60 h-40">
               {/* Placeholder for phone/heart icon */}
-              <svg className="w-20 h-20 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 48 48">
+              <svg className="w-28 h-28 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 48 48">
                 <rect x="12" y="6" width="24" height="36" rx="4" fill="white" fillOpacity="0.1" />
                 <rect x="12" y="6" width="24" height="36" rx="4" stroke="white" strokeWidth="2" />
                 <circle cx="24" cy="20" r="5" stroke="white" strokeWidth="2" />
@@ -61,17 +65,17 @@ const Login = () => {
               </svg>
             </div>
           </div>
-          <h2 className="text-xl font-bold text-center mb-2">Join SocialVerse</h2>
+          <h2 className="text-3xl font-bold text-center mb-2">Join SocialVerse</h2>
           <p className="text-sm text-gray-500 text-center mb-6">Connect with friends and the world around you.</p>
           <button
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg flex items-center justify-center mb-3 transition"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1.5 rounded-lg flex items-center justify-center mb-3 transition text-sm"
             onClick={handlePlugLogin}
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 17l-4 4m0 0l-4-4m4 4V3" /></svg>
             Log in with Plug
           </button>
           <button
-            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 rounded-lg flex items-center justify-center mb-4 transition"
+            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-1.5 rounded-lg flex items-center justify-center mb-4 transition text-sm"
             onClick={handleInternetIdentityLogin}
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><circle cx="12" cy="8" r="1" /></svg>
