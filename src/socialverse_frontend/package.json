@@ -29,7 +29,9 @@
   "name": "socialverse_frontend",
   "private": true,
   "scripts": {
+    "dev": "vite",
     "build": "tsc && vite build",
+    "preview": "vite preview",
     "format": "prettier --write \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\"",
     "prebuild": "dfx generate",
     "setup": "npm i && dfx canister create socialverse_backend && dfx generate socialverse_backend && dfx deploy",

@@ -1,3 +1,11 @@
 service : {
+    "add_post": (text, text, opt text) -> (nat64);
+    "get_posts": () -> (vec record {
+        id: nat64;
+        author: text;
+        content: text;
+        image: opt text;
+        timestamp: nat64;
+    });
     "greet": (text) -> (text) query;
 }

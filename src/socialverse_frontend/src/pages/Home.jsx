@@ -1,41 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PostCard from '../components/PostCard';
 import { Link } from 'react-router-dom';
+import { createActor, canisterId } from '../../../declarations/socialverse_backend';
+
+const backend = createActor(canisterId);
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState('foryou');
-
+  const [posts, setPosts] = useState([]);
   const defaultImage = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80';
-  const posts = [
-    {
-      id: 1,
-      author: {
-        name: 'Liam Carter',
-        username: '@liam.c',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face'
-      },
-      time: '1d ago',
-      content: "Just finished reading 'The Silent Patient' by Alex Michaelides. What a twist! Highly recommend for mystery lovers.",
-      likes: 23,
-      comments: 5,
-      shares: 2,
-      image: defaultImage
-    },
-    {
-      id: 2,
-      author: {
-        name: 'Olivia Bennett',
-        username: '@olivia.b',
-        avatar: 'https://randomuser.me/api/portraits/women/65.jpg'
-      },
-      time: '2d ago',
-      content: "Exploring the city's hidden gems today. Found this cozy cafe with the best coffee! ☕",
-      image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400&h=300&fit=crop',
-      likes: 45,
-      comments: 12,
-      shares: 8
-    }
-  ];
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        console.log("Backend actor methods:", backend);
+        const backendPosts = await backend.get_posts();
+        console.log("Fetched posts from backend:", backendPosts);
+        setPosts(backendPosts);
+      } catch (error) {
+        console.error('Failed to fetch posts from backend:', error);
+      }
+    };
+    fetchPosts();
+  }, []);
 
   const trends = [
     { tag: '#ICPLaunch', posts: '15.5K Posts' },
