@@ -1,3 +1,38 @@
+type Profile = record {
+  user_principal : principal;
+  username       : text;
+  name           : text;
+  bio            : text;
+  avatar         : opt text;
+};
+
+type Post = record {
+  id        : nat64;
+  author    : text;
+  content   : text;
+  image     : opt text;
+  timestamp : nat64;
+  likes     : vec principal;
+  comments  : vec record {
+    user_principal : principal;
+    username : text;
+    text : text;
+    timestamp : nat64;
+  };
+};
+
 service : {
-    "greet": (text) -> (text) query;
-}
+  add_or_update_profile : (Profile) -> ();
+  get_profile           : (text) -> (opt Profile) query;
+  get_all_profiles      : () -> (vec Profile) query;
+  add_post              : (text, text, opt text) -> (nat64);
+  get_posts             : () -> (vec Post) query;
+  greet                 : (text) -> (text) query;
+  like_post             : (nat64, principal) -> (bool);
+  add_comment           : (nat64, record {
+    user_principal : principal;
+    username : text;
+    text : text;
+    timestamp : nat64;
+  }) -> (bool);
+};

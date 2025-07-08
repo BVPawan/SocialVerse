@@ -2,26 +2,29 @@ import React, { useState, useEffect } from 'react';
 import PostCard from '../components/PostCard';
 import { Link } from 'react-router-dom';
 import { createActor, canisterId } from '../../../declarations/socialverse_backend';
+import { useUser } from '../UserContext';
 
 const backend = createActor(canisterId);
 
 const Home = () => {
+  const { user } = useUser();
   const [activeTab, setActiveTab] = useState('foryou');
   const [posts, setPosts] = useState([]);
+  const [profiles, setProfiles] = useState([]);
   const defaultImage = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80';
 
   useEffect(() => {
-    const fetchPosts = async () => {
+    const fetchData = async () => {
       try {
-        console.log("Backend actor methods:", backend);
         const backendPosts = await backend.get_posts();
-        console.log("Fetched posts from backend:", backendPosts);
+        const backendProfiles = await backend.get_all_profiles();
         setPosts(backendPosts);
+        setProfiles(backendProfiles);
       } catch (error) {
-        console.error('Failed to fetch posts from backend:', error);
+        console.error('Failed to fetch posts or profiles from backend:', error);
       }
     };
-    fetchPosts();
+    fetchData();
   }, []);
 
   const trends = [
@@ -71,13 +74,13 @@ const Home = () => {
           {/* Profile Section */}
           <div className="flex flex-col items-center mb-6">
             <img
-              src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face"
-              alt="Sophia"
+              src={user.avatar || 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face'}
+              alt={user.username || 'User'}
               className="w-10 h-10 rounded-full mb-2"
             />
             <div className="leading-tight text-center">
-              <h3 className="font-semibold text-gray-900 text-sm">Sophia</h3>
-              <p className="text-gray-500 text-xs">@sophia.miller</p>
+              <h3 className="font-semibold text-gray-900 text-sm">{user.name || 'User'}</h3>
+              <p className="text-gray-500 text-xs">@{user.username || 'username'}</p>
             </div>
           </div>
 
@@ -165,9 +168,26 @@ const Home = () => {
 
           {/* Posts Feed */}
           <div className="bg-white">
-            {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
+            {posts.map((post) => {
+              // Try to find the author's profile by username (or principal if you use that)
+              const authorProfile = profiles.find(
+                (profile) => profile.username === post.author
+              );
+              // Build a post object with author as a profile object if found
+              const postWithProfile = {
+                ...post,
+                author: authorProfile || { name: post.author, username: post.author, avatar: '', bio: '', about: '', link: '' },
+              };
+              return <PostCard key={post.id} post={postWithProfile} onLike={async () => {
+                // Refetch posts after like
+                try {
+                  const backendPosts = await backend.get_posts();
+                  setPosts(backendPosts);
+                } catch (e) {
+                  console.error('Failed to refresh posts after like:', e);
+                }
+              }} />;
+            })}
           </div>
         </div>
       </div>

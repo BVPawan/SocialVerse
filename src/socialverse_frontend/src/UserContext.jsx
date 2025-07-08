@@ -12,13 +12,14 @@ const defaultUser = {
   posts: 123,
   followers: '456K',
   following: 789,
+  principal: null,
 };
 
 export function UserProvider({ children }) {
   const [user, setUser] = useState(defaultUser);
   const [loggedIn, setLoggedIn] = useState(false);
   const login = (userData) => {
-    setUser(userData || defaultUser);
+    setUser({ ...defaultUser, ...userData, principal: userData?.principal || null });
     setLoggedIn(true);
   };
   const logout = () => {

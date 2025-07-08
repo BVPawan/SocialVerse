@@ -1,7 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createActor, canisterId } from '../../../declarations/socialverse_backend';
+import { useUser } from '../UserContext';
 
 const defaultImage = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80';
+
+const backend = createActor(canisterId);
 
 const CreatePost = () => {
   const [media, setMedia] = useState(defaultImage);
@@ -10,6 +14,7 @@ const CreatePost = () => {
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef();
   const navigate = useNavigate();
+  const { user } = useUser();
 
   const handleMediaChange = (e) => {
     const file = e.target.files[0];
@@ -20,12 +25,23 @@ const CreatePost = () => {
     }
   };
 
+  const handleRemoveImage = () => {
+    setMedia(defaultImage);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!caption.trim()) return;
     setIsLoading(true);
     try {
-      // TODO: Add blockchain/canister call here
+      // Call the backend canister's add_post method
+      const author = user?.username || "Anonymous";
+      const content = caption;
+      const image = media === defaultImage ? [] : [media];
+      console.log("Calling add_post with:", author, content, image);
+      const result = await backend.add_post(author, content, image);
+      console.log("add_post result:", result);
       setCaption('');
       setHashtags('');
       setMedia(defaultImage);
@@ -33,6 +49,7 @@ const CreatePost = () => {
       navigate('/home');
     } catch (error) {
       alert('Error creating post');
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -51,13 +68,32 @@ const CreatePost = () => {
         </button>
         {/* Media Preview */}
         <div className="w-full flex justify-center rounded-t-2xl overflow-hidden relative" style={{height: '260px', background: '#f5f5f5'}}>
-          <img src={media} alt="Preview" className="object-cover w-full h-full" />
+          {media === defaultImage ? (
+            <div className="flex flex-col items-center justify-center w-full h-full border-2 border-dashed border-gray-300 bg-gray-50">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a4 4 0 004 4h10a4 4 0 004-4V7a4 4 0 00-4-4H7a4 4 0 00-4 4z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11a4 4 0 108 0 4 4 0 00-8 0z" />
+              </svg>
+              <span className="text-gray-400">Add an image (optional)</span>
+            </div>
+          ) : (
+            <>
+              <img src={media} alt="Preview" className="object-cover w-full h-full" />
+              <button
+                className="absolute top-4 left-4 bg-white bg-opacity-80 text-gray-700 px-3 py-1 rounded shadow hover:bg-red-100 text-xs"
+                onClick={handleRemoveImage}
+                type="button"
+              >
+                Remove
+              </button>
+            </>
+          )}
           <button
             className="absolute bottom-4 right-4 bg-blue-600 text-white px-4 py-1 rounded shadow hover:bg-blue-700 text-sm"
             onClick={() => fileInputRef.current.click()}
             type="button"
           >
-            Change Media
+            {media === defaultImage ? 'Upload Image' : 'Change Image'}
           </button>
           <input
             type="file"

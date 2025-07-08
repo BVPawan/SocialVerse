@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUser } from '../UserContext';
+import { createActor, canisterId } from '../../../declarations/socialverse_backend';
+import PostCard from '../components/PostCard';
+import { AuthClient } from "@dfinity/auth-client";
 
 const tabs = [
   { label: 'POSTS' },
@@ -14,16 +17,90 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [editing, setEditing] = useState(!user?.username); // If no user, show create profile form
   const [form, setForm] = useState(user);
+  const [userPosts, setUserPosts] = useState([]);
+  const [avatarPreview, setAvatarPreview] = useState(user.avatar);
+  const avatarInputRef = React.useRef();
 
-  const handleChange = (e) => {
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setAvatarPreview(ev.target.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setAvatarPreview('');
+    if (avatarInputRef.current) avatarInputRef.current.value = '';
+  };
+
+  const handleFormChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setUser(form);
-    setEditing(false);
+    // Save profile to backend
+    const backend = createActor(canisterId);
+    let principal = "";
+    try {
+      const authClient = await AuthClient.create();
+      principal = authClient.getIdentity().getPrincipal();
+    } catch (e) {
+      // fallback or error
+    }
+    const profileToSave = {
+      ...form,
+      avatar: avatarPreview ? [avatarPreview] : [],
+      user_principal: principal,
+    };
+    try {
+      await backend.add_or_update_profile(profileToSave);
+      setUser(profileToSave);
+      setEditing(false);
+    } catch (err) {
+      alert('Failed to save profile');
+      console.error("Profile save error:", err);
+      if (err && err.message) {
+        alert("Error details: " + err.message);
+      }
+    }
   };
+
+  useEffect(() => {
+    const fetchUserPosts = async () => {
+      const backend = createActor(canisterId);
+      try {
+        const allPosts = await backend.get_posts();
+        // Filter posts by current user's username (or principal if available)
+        const filtered = allPosts.filter(
+          (post) => post.author === user.username || post.author === user.name
+        );
+        setUserPosts(filtered);
+      } catch (e) {
+        setUserPosts([]);
+      }
+    };
+    fetchUserPosts();
+  }, [user]);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const backend = createActor(canisterId);
+      try {
+        // Fetch profile by username (replace with principal if available)
+        const profile = await backend.get_profile(user.username);
+        if (profile) {
+          setForm(profile);
+          setAvatarPreview(profile.avatar || '');
+        }
+      } catch (e) {
+        // No profile found, keep defaults
+      }
+    };
+    fetchUserProfile();
+  }, [user.username]);
 
   // If no user profile, show Create Profile button and form
   if (!user?.username && !editing) {
@@ -90,20 +167,82 @@ const Profile = () => {
             </div>
           </div>
           {editing && (
-            <form className="mt-4 space-y-2" onSubmit={handleSubmit}>
-              <input name="avatar" value={form.avatar} onChange={handleChange} placeholder="Avatar URL" className="w-full border p-2 rounded" />
-              <input name="username" value={form.username} onChange={handleChange} placeholder="Username" className="w-full border p-2 rounded" />
-              <input name="name" value={form.name} onChange={handleChange} placeholder="Name" className="w-full border p-2 rounded" />
-              <input name="bio" value={form.bio} onChange={handleChange} placeholder="Bio" className="w-full border p-2 rounded" />
-              <input name="about" value={form.about} onChange={handleChange} placeholder="About" className="w-full border p-2 rounded" />
-              <input name="link" value={form.link} onChange={handleChange} placeholder="Link" className="w-full border p-2 rounded" />
-              <div className="flex space-x-2">
-                <input name="posts" value={form.posts} onChange={handleChange} placeholder="Posts" className="w-1/3 border p-2 rounded" />
-                <input name="followers" value={form.followers} onChange={handleChange} placeholder="Followers" className="w-1/3 border p-2 rounded" />
-                <input name="following" value={form.following} onChange={handleChange} placeholder="Following" className="w-1/3 border p-2 rounded" />
+            <div className="mt-4 w-full max-w-xl mx-auto bg-white rounded-xl shadow p-6 flex flex-col items-center">
+              {/* Avatar Upload */}
+              <div className="relative mb-4">
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Avatar Preview" className="w-24 h-24 rounded-full object-cover border-2 border-gray-300" />
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border-2 border-dashed border-gray-300">
+                    <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 16v-4" />
+                      <circle cx="12" cy="8" r="1" />
+                    </svg>
+                  </div>
+                )}
+                <button
+                  className="absolute bottom-0 right-0 bg-blue-600 text-white px-2 py-1 rounded-full text-xs shadow hover:bg-blue-700"
+                  onClick={() => avatarInputRef.current.click()}
+                  type="button"
+                >
+                  {avatarPreview ? 'Change' : 'Upload'}
+                </button>
+                {avatarPreview && (
+                  <button
+                    className="absolute top-0 left-0 bg-white bg-opacity-80 text-gray-700 px-2 py-1 rounded-full text-xs shadow hover:bg-red-100"
+                    onClick={handleRemoveAvatar}
+                    type="button"
+                  >
+                    Remove
+                  </button>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  ref={avatarInputRef}
+                  onChange={handleAvatarChange}
+                />
               </div>
-              <button type="submit" className="bg-blue-600 text-white px-4 py-1 rounded font-semibold text-sm">Save</button>
-            </form>
+              <form className="w-full space-y-3" onSubmit={handleSubmit}>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                  <input name="username" value={form.username} onChange={handleFormChange} placeholder="Username" className="w-full border p-2 rounded" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                  <input name="name" value={form.name} onChange={handleFormChange} placeholder="Name" className="w-full border p-2 rounded" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                  <input name="bio" value={form.bio} onChange={handleFormChange} placeholder="Bio" className="w-full border p-2 rounded" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">About</label>
+                  <input name="about" value={form.about} onChange={handleFormChange} placeholder="About" className="w-full border p-2 rounded" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Link</label>
+                  <input name="link" value={form.link} onChange={handleFormChange} placeholder="Link" className="w-full border p-2 rounded" />
+                </div>
+                <div className="flex space-x-2">
+                  <div className="w-1/3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Posts</label>
+                    <input name="posts" value={form.posts} onChange={handleFormChange} placeholder="Posts" className="w-full border p-2 rounded" />
+                  </div>
+                  <div className="w-1/3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Followers</label>
+                    <input name="followers" value={form.followers} onChange={handleFormChange} placeholder="Followers" className="w-full border p-2 rounded" />
+                  </div>
+                  <div className="w-1/3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Following</label>
+                    <input name="following" value={form.following} onChange={handleFormChange} placeholder="Following" className="w-full border p-2 rounded" />
+                  </div>
+                </div>
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded font-semibold text-sm w-full mt-2">Save</button>
+              </form>
+            </div>
           )}
         </div>
       </div>
@@ -127,15 +266,13 @@ const Profile = () => {
 
       {/* Posts Grid */}
       <div className="grid grid-cols-3 gap-6 mt-10">
-        {postPlaceholders.map((_, idx) => (
-          <div key={idx} className="aspect-square bg-gray-100 flex items-center justify-center rounded-lg border border-gray-200 hover:shadow-md transition">
-            <svg className="w-14 h-14 text-gray-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <path d="M21 21l-6-6-3 3-4-4" />
-            </svg>
-          </div>
-        ))}
+        {userPosts.length === 0 ? (
+          <div className="col-span-3 text-center text-gray-400">No posts yet.</div>
+        ) : (
+          userPosts.map((post, idx) => (
+            <PostCard key={post.id || idx} post={post} />
+          ))
+        )}
       </div>
     </div>
   );

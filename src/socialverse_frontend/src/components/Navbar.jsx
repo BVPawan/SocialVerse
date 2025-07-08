@@ -1,4 +1,6 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useUser } from "../UserContext";
+import { AuthClient } from "@dfinity/auth-client";
 
 const navItems = [
   { name: "Home", path: "/home" },
@@ -9,8 +11,24 @@ const navItems = [
 
 const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useUser();
+
   // Hide Navbar on login page
   if (location.pathname === "/" || location.pathname === "/login") return null;
+
+  const handleLogout = async () => {
+    // Logout from Internet Identity if used
+    try {
+      const authClient = await AuthClient.create();
+      await authClient.logout();
+    } catch (e) {
+      // Ignore if not logged in with II
+    }
+    logout();
+    navigate("/login");
+  };
+
   return (
     <nav className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-12">
@@ -37,6 +55,12 @@ const Navbar = () => {
               {item.name}
             </Link>
           ))}
+          <button
+            onClick={handleLogout}
+            className="ml-2 px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-colors duration-150"
+          >
+            Logout
+          </button>
         </div>
       </div>
     </nav>

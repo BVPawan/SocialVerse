@@ -14,7 +14,8 @@ const Login = () => {
         const connected = await window.ic.plug.requestConnect();
         if (connected) {
           const principal = await window.ic.plug.getPrincipal();
-          login(); // set loggedIn true
+          // You may want to fetch user profile info here as well
+          login({ principal }); // Pass principal to login
           navigate('/home');
         } else {
           alert("Plug login failed or was cancelled.");
@@ -33,7 +34,9 @@ const Login = () => {
     await authClient.login({
       identityProvider: "https://identity.ic0.app/#authorize",
       onSuccess: async () => {
-        login(); // set loggedIn true
+        const principal = authClient.getIdentity().getPrincipal();
+        // You may want to fetch user profile info here as well
+        login({ principal }); // Pass principal to login
         navigate('/home');
       }
     });
