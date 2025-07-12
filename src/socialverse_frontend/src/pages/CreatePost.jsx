@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createActor, canisterId } from '../../../declarations/socialverse_backend';
 import { useUser } from '../UserContext';
+import { Principal } from '@dfinity/principal';
 
 const defaultImage = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80';
 
@@ -36,11 +37,28 @@ const CreatePost = () => {
     setIsLoading(true);
     try {
       // Call the backend canister's add_post method
-      const author = user?.username || "Anonymous";
-      const content = caption;
-      const image = media === defaultImage ? [] : [media];
-      console.log("Calling add_post with:", author, content, image);
-      const result = await backend.add_post(author, content, image);
+      const author = user?.username || "Anonymous"; // string
+      let principalString = user?.principal;
+      if (principalString && typeof principalString === 'object' && principalString.__principal__) {
+        principalString = principalString.__principal__;
+      }
+      if (Array.isArray(principalString)) {
+        principalString = principalString[0];
+      }
+      if (principalString && principalString.toString) {
+        principalString = principalString.toString();
+      }
+      const author_principal = Principal.fromText(principalString); // Principal object
+      const content = caption; // string
+      const image = media === defaultImage ? [] : [media]; // [] or [string]
+      // Debug logs
+      console.log('Calling add_post with:', {
+        author, type_author: typeof author,
+        author_principal, type_author_principal: typeof author_principal,
+        content, type_content: typeof content,
+        image, type_image: Array.isArray(image) ? 'array' : typeof image
+      });
+      const result = await backend.add_post(author, author_principal, content, image);
       console.log("add_post result:", result);
       setCaption('');
       setHashtags('');

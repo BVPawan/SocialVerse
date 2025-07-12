@@ -35,4 +35,14 @@ service : {
     text : text;
     timestamp : nat64;
   }) -> (bool);
+  get_comments          : (nat64) -> (vec record {
+    user_principal : principal;
+    username : text;
+    text : text;
+    timestamp : nat64;
+  }) query;
+  follow_user           : (principal, principal) -> (bool);
+  unfollow_user         : (principal, principal) -> (bool);
+  get_following         : (principal) -> (vec principal) query;
+  get_followers         : (principal) -> (vec principal) query;
 };

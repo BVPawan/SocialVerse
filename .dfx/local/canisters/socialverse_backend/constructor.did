@@ -25,7 +25,7 @@ service : {
   add_or_update_profile : (Profile) -> ();
   get_profile           : (text) -> (opt Profile) query;
   get_all_profiles      : () -> (vec Profile) query;
-  add_post              : (text, text, opt text) -> (nat64);
+  add_post              : (text, principal, text, opt text) -> (nat64);
   get_posts             : () -> (vec Post) query;
   greet                 : (text) -> (text) query;
   like_post             : (nat64, principal) -> (bool);
@@ -35,4 +35,14 @@ service : {
     text : text;
     timestamp : nat64;
   }) -> (bool);
+  get_comments          : (nat64) -> (vec record {
+    user_principal : principal;
+    username : text;
+    text : text;
+    timestamp : nat64;
+  }) query;
+  follow_user           : (principal, principal) -> (bool);
+  unfollow_user         : (principal, principal) -> (bool);
+  get_following         : (principal) -> (vec principal) query;
+  get_followers         : (principal) -> (vec principal) query;
 };
