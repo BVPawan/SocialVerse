@@ -60,7 +60,7 @@ SocialVerse/
 
 ```bash
 # Clone the repo
-git clone https://github.com/ashishjha0125/SocialVerse.git
+git clone https://github.com/BVPawan/SocialVerse.git
 cd SocialVerse
 
 # Install frontend dependencies
@@ -93,7 +93,7 @@ npm run dev
 Contributions are welcome! Follow these steps:
 
 ```bash
-git fork https://github.com/ashishjha0125/SocialVerse.git
+git fork https://github.com/BVPawan/SocialVerse.git
 cd SocialVerse
 git checkout -b feature/your-feature
 ```
